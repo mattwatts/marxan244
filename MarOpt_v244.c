@@ -682,7 +682,7 @@ int Marxan(char sInputFileName[])
               else
                  sprintf(tempname2,"%s_ho%05i.dat",savename,irun%10000);
 
-	      AppendHeuristicOrder(-1,-1, tempname2, fnames.saveheuristicorder, 1);
+              AppendHeuristicOrder(-1,-1, tempname2, fnames.saveheuristicorder, 1);
    
               #ifdef DEBUGTRACEFILE
               sprintf(debugbuffer,"after HeuristicOrder savename %s\n",savename);
@@ -692,7 +692,7 @@ int Marxan(char sInputFileName[])
 
            Heuristics(spno,puno,pu,connections,R,cm,spec,SM,&reserve,
                       costthresh,tpf1,tpf2,heurotype,clumptype, 
-		      fnames.saveheuristicorder, tempname2);
+                      fnames.saveheuristicorder, tempname2);
 
            if (verbose > 1 && (runopts == 2 || runopts == 5))
            {
@@ -8265,11 +8265,11 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
               ShowGenProgInfo(" Probability2D %.1f\n",reserve->probability2D);
            ShowGenProgInfo(" Penalty %.1f\n",reserve->penalty);
 
-	   if (savemode)
-	   {
-             AppendHeuristicOrder(bestpu, orderno, savename, savemode, 0); 
-	     orderno++;
-	   }
+          if (savemode)
+          {
+            AppendHeuristicOrder(bestpu, 1, savename, savemode, orderno); 
+            orderno++;
+          }
         }
 
     }while(bestscore /*reserve->missing*/);/** Repeat until all good PUs have been added **/
