@@ -8288,7 +8288,11 @@ void AppendHeuristicOrder(int puno, int orderno, char savename[],int imode, int 
      int i, iStatus;
      char sDelimiter[20];
 
-     fp = fopen(savename,"a");
+     if (iIncludeHeaders == 1) 
+       fp = fopen(savename, "w");
+     else 
+       fp = fopen(savename, "a");
+
      if (!fp)
         ShowErrorMessage("Cannot save output to %s \n",savename);
 
@@ -8296,17 +8300,13 @@ void AppendHeuristicOrder(int puno, int orderno, char savename[],int imode, int 
      {
         strcpy(sDelimiter,",");
         if (iIncludeHeaders == 1)
-        {
-           fprintf(fp,"\"%s\"%s\"%s\"\n", "planning_unit", sDelimiter, "order");
-	}
+          fprintf(fp,"\"%s\"%s\"%s\"\n", "planning_unit", sDelimiter, "order");
      }
      else
      {
         strcpy(sDelimiter,"\t");
         if (iIncludeHeaders == 1)
-        {
            fprintf(fp,"PUID%sOrder\n",sDelimiter);
-	}
      }
 
      if (iIncludeHeaders == 0) 
