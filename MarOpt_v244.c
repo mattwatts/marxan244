@@ -31,7 +31,7 @@
 
 #undef MEMDEBUG
 
-#define DEBUGTRACEFILE
+#undef DEBUGTRACEFILE
 #undef EXTRADEBUGTRACE
 #undef ANNEALING_TEST
 #undef DEBUGCHANGEPEN
@@ -666,8 +666,33 @@ int Marxan(char sInputFileName[])
            AppendDebugTraceFile(debugbuffer);
            #endif
 
+           if (fnames.saveheuristicorder)
+           {
+
+              #ifdef DEBUGTRACEFILE
+              sprintf(debugbuffer,"before HeuristicOrder savename %s\n",savename);
+              AppendDebugTraceFile(debugbuffer);
+              #endif
+   
+              if (fnames.saveheuristicorder==3)
+                 sprintf(tempname2,"%s_ho%05i.csv",savename,irun%10000);
+              else
+              if (fnames.saveheuristicorder==2)
+                 sprintf(tempname2,"%s_ho%05i.txt",savename,irun%10000);
+              else
+                 sprintf(tempname2,"%s_ho%05i.dat",savename,irun%10000);
+
+              AppendHeuristicOrder(-1,-1, tempname2, fnames.saveheuristicorder, 1);
+   
+              #ifdef DEBUGTRACEFILE
+              sprintf(debugbuffer,"after HeuristicOrder savename %s\n",savename);
+              AppendDebugTraceFile(debugbuffer);
+              #endif
+           }
+
            Heuristics(spno,puno,pu,connections,R,cm,spec,SM,&reserve,
-                      costthresh,tpf1,tpf2,heurotype,clumptype);
+                      costthresh,tpf1,tpf2,heurotype,clumptype, 
+                      fnames.saveheuristicorder, tempname2);
 
            if (verbose > 1 && (runopts == 2 || runopts == 5))
            {
@@ -5784,6 +5809,7 @@ void SetOptions(double *cm,double *prop,struct sanneal *anneal,
      (*fnames).saveitimptrace = 0;
      (*fnames).itimptracerows = 0;
      (*fnames).savespeciesdata = 0;
+     (*fnames).saveheuristicorder = 0;
      (*fnames).rimagetype = 0;
      (*fnames).rexecutescript = 0;
      (*fnames).rclustercount = 0;
@@ -5840,6 +5866,7 @@ void SetOptions(double *cm,double *prop,struct sanneal *anneal,
      rdsvar(fp,"SAVETARGMET",&(*fnames).savespecies,INTEGER,0,present);
      rdsvar(fp,"SAVESUMSOLN",&(*fnames).savesumsoln,INTEGER,0,present);
      rdsvar(fp,"SAVESPECIESDATA",&(*fnames).savespeciesdata,INTEGER,0,present);
+     rdsvar(fp,"SAVEHEURISTICORDER",&(*fnames).saveheuristicorder,INTEGER,0,present);
      rdsvar(fp,"SAVEPENALTY",&(*fnames).savepenalty,INTEGER,0,present);
      rdsvar(fp,"SAVETOTALAREAS",&(*fnames).savetotalareas,INTEGER,0,present);
      rdsvar(fp,"SAVERICHNESS",&(*fnames).saverichness,INTEGER,0,present);
@@ -5911,6 +5938,11 @@ void SetOptions(double *cm,double *prop,struct sanneal *anneal,
      rdsvar(fp,"MATRIXSPORDERNAME",stemp,STRING,0,present);
      (*fnames).matrixspordername = (char *) calloc(strlen(stemp)+1,sizeof(char));
      strcpy((*fnames).matrixspordername,stemp);
+
+     strcpy(stemp,"NULL");
+     rdsvar(fp,"HEURISTICORDERNAME",stemp,STRING,0,present);
+     (*fnames).heuristicordername = (char *) calloc(strlen(stemp)+1,sizeof(char));
+     strcpy((*fnames).heuristicordername,stemp);
 
      strcpy(stemp,"NULL");
      rdsvar(fp,"BOUNDNAME",stemp,STRING,0,present);
@@ -8107,12 +8139,12 @@ double SumIrr(int ipu,double Rare[],struct spustuff pu[],struct spu SM[],typesp 
 
 /************* Main Heuristic Engine ********************/
 void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections connections[],
-        int R[], double cm,typesp *spec,struct spu SM[], struct scost *reserve,
-        double costthresh, double tpf1,double tpf2, int imode,int clumptype)
+                int R[], double cm,typesp *spec,struct spu SM[], struct scost *reserve,
+                double costthresh, double tpf1,double tpf2, int imode,int clumptype, int savemode, char *savename)
 /** imode = 1: 2: 3: 4: */
 /** imode = 5: 6: Prod Irreplaceability, 7: Sum Irreplaceability */
 {
-    int i,bestpu;
+    int i,bestpu, orderno;
     double bestscore,currscore;
     struct scost change;
     double *Rare;
@@ -8149,6 +8181,8 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
         AppendDebugTraceFile(debugbuffer);
         #endif
     }
+
+    orderno = 1;
 
     do{
         bestpu = 0;
@@ -8230,6 +8264,12 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
            if (fProb2D == 1)
               ShowGenProgInfo(" Probability2D %.1f\n",reserve->probability2D);
            ShowGenProgInfo(" Penalty %.1f\n",reserve->penalty);
+
+          if (savemode >= 1)
+          {
+            AppendHeuristicOrder(pu[bestpu].id, orderno, savename, savemode, 0); 
+            orderno++;
+          }
         }
 
     }while(bestscore /*reserve->missing*/);/** Repeat until all good PUs have been added **/
@@ -8241,6 +8281,42 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
     #endif
 
 }  /**** Heuristics ************/
+
+void AppendHeuristicOrder(int puno, int orderno, char savename[],int imode, int iIncludeHeaders)
+{
+     FILE *fp;
+     int i, iStatus;
+     char sDelimiter[20];
+
+     if (imode == 0)
+       return;
+
+     if (iIncludeHeaders == 1) 
+       fp = fopen(savename, "w");
+     else 
+       fp = fopen(savename, "a");
+
+     if (!fp)
+        ShowErrorMessage("Cannot save output to %s \n",savename);
+
+     if (imode > 1)
+     {
+        strcpy(sDelimiter,",");
+        if (iIncludeHeaders == 1)
+          fprintf(fp,"\"%s\"%s\"%s\"\n", "planning_unit", sDelimiter, "order");
+     }
+     else
+     {
+        strcpy(sDelimiter,"\t");
+        if (iIncludeHeaders == 1)
+           fprintf(fp,"PUID%sOrder\n",sDelimiter);
+     }
+
+     if (iIncludeHeaders == 0) 
+         fprintf(fp,"%i%s%i\n", puno ,sDelimiter, orderno);
+
+     fclose(fp);
+}
 
 /* HEURISTIC.C END */
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

@@ -190,6 +190,7 @@
         char *puvsprname;
         //char *puvspprobname;
         char *matrixspordername;
+	char *heuristicordername;
         char *connectionname;
         char *blockdefname;
         char *bestfieldname;
@@ -208,6 +209,7 @@
         int savepenalty;
         int savetotalareas;
         int savesolutionsmatrix;
+	int saveheuristicorder;
         int solutionsmatrixheaders;
         int saveannealingtrace;
         int annealingtracerows;
@@ -524,7 +526,8 @@ double ProdIrr(int ipu,double Rare[],struct spustuff pu[],struct spu SM[],typesp
 double SumIrr(int ipu,double Rare[],struct spustuff pu[],struct spu SM[],typesp *spec);
 void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections connections[],
         int R[], double cm,typesp *spec,struct spu SM[], struct scost *reserve,
-        double costthresh, double tpf1,double tpf2, int imode,int clumptype);
+        double costthresh, double tpf1,double tpf2, int imode,int clumptypei, int savemode, char *savename);
+void AppendHeuristicOrder(int puno, int orderno, char savename[],int imode, int iIncludeHeaders);
 
 #endif
 
