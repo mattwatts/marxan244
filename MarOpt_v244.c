@@ -8267,7 +8267,7 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
 
           if (savemode >= 1)
           {
-            AppendHeuristicOrder(bestpu, orderno, savename, savemode, 0); 
+            AppendHeuristicOrder(pu[bestpu].id, orderno, savename, savemode, 0); 
             orderno++;
           }
         }
