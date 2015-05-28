@@ -8265,9 +8265,9 @@ void Heuristics(int spno,int puno,struct spustuff pu[],struct sconnections conne
               ShowGenProgInfo(" Probability2D %.1f\n",reserve->probability2D);
            ShowGenProgInfo(" Penalty %.1f\n",reserve->penalty);
 
-          if (savemode)
+          if (savemode >= 1)
           {
-            AppendHeuristicOrder(bestpu, 1, savename, savemode, orderno); 
+            AppendHeuristicOrder(bestpu, orderno, savename, savemode, 0); 
             orderno++;
           }
         }
@@ -8287,6 +8287,9 @@ void AppendHeuristicOrder(int puno, int orderno, char savename[],int imode, int 
      FILE *fp;
      int i, iStatus;
      char sDelimiter[20];
+
+     if (imode == 0)
+       return;
 
      if (iIncludeHeaders == 1) 
        fp = fopen(savename, "w");
